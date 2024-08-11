@@ -1,2 +1,1 @@
-This is a record of my progress in learning Django. It includes knowledge on front-end, back-end, MySQL, and Python. It may also be useful for those who want to learn Django.
-My whole learning progress mainly rely on the video lectures from ![最新Python的web开发全家桶（django+前端+数据库）](https://www.bilibili.com/video/BV1rT4y1v7uQ/?share_source=copy_web&vd_source=916a29382deff2a70494e371bf417134)
+This is a record of my progress in learning Django. It includes knowledge of front-end, back-end, MySQL, and Python. It may also be useful for those who want to learn Django. My entire learning progress primarily relies on the video lectures from[最新Python的web开发全家桶（django+前端+数据库）](https://www.bilibili.com/video/BV1rT4y1v7uQ/?share_source=copy_web&vd_source=916a29382deff2a70494e371bf417134).
