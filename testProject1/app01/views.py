@@ -174,3 +174,27 @@ def login(request):
     # return HttpResponse("登陸失敗")
     # 我們希望重新返回登錄頁面並通過error_msg返回錯誤信息
     return render(request, "login.html", {"error_msg": "用戶名或密碼錯誤，也有可能是驗證碼錯誤，你自己看看"})
+
+from app01.models import UserInfo
+def orm(request):
+    # 測試ORM對表中數據操作
+    ###   1. 新建 ###
+    # UserInfo.objects.create(name="Thomas")
+    # UserInfo.objects.create(password="123")
+    # UserInfo.objects.create(age=22)
+    # UserInfo.objects.create(name="Alex", password="apple", age=19)
+    # UserInfo.objects.create(name="Lucy", password="123Lci", age=35)
+    # 每次create都是一整行
+    ###   2. 刪除   ###
+    # UserInfo.objects.filter(id=3).delete()
+    # UserInfo.objects.all().delete()
+    ###   3. 獲取數據   ###
+    # data_list = [row,row,row]  Query Set類型
+    # data_list = UserInfo.objects.all()
+    # for obj in data_list:
+    #     print(obj.id, obj.name, obj.age)
+    # rol_obj = UserInfo.objects.filter(id=5).first()
+    ###   4. 更新數據   ###
+    UserInfo.objects.all().update(password="<PASSWORD>")
+    # 改成篩選出的某些數據也行，all和filter某種意義上是用法一致的
+    return HttpResponse("成功")

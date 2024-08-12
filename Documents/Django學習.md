@@ -249,9 +249,9 @@ def user_list(request):
 			import requests   # 訪問外部的網絡信息所必須的
 			import datetime   # 爲了將一些外部的數字時間轉化爲人類可讀的時間信息
 			import time   # 爲了防止過頻繁的訪問而設置的一些延遲所需要的
-
+		
 		### 第一種：新浪的API，這邊用的好像是過時的，給的信息都是2023年的 ###
-
+		
 			url = "https://feed.mix.sina.com.cn/api/roll/get"  
 			params = {  
 				"pageid": "153",  
@@ -281,9 +281,9 @@ def user_list(request):
 				extracted_data.append(news_entry)  
 			  
 			print(extracted_data)
-
+		
 		### 第二種：Hacker News的API ###
-
+		
 			url = "https://hacker-news.firebaseio.com/v0/newstories.json"  
 			data = {}  
 			  
@@ -363,7 +363,7 @@ def user_list(request):
 		```html
 		{% load static %}
 		{# 要記得讀取static #}
-
+		
 		<!DOCTYPE html>  
 		<html lang="en">  
 		<head>  
@@ -479,4 +479,197 @@ def something(request):
 	- Django比Flask多一個csrf_token安全驗證的過程需要在要提交的表單内加入對應的指令`{% csrf_token %}`，否則會報錯。![[Forbidden_403.png]]注意一定要加載表單裏！
 	- 表單提交後的檢索是依據`<input>`的`name`屬性
 	- 添加`<span style="color: red">*{{ error_msg }}</span>`可以在錯誤時返回錯誤數據，如同![[登錄錯誤效果.png]]
+
 ## 7 數據庫操作
+
+- MySQL + pymysql![[Python與MySQL]]
+- Django開發時操作數據庫會更簡單，它内部提供了ORM框架![[ORM]]另一方面，Django最新版本直接使用pymysql存在一些bug大概據説。
+
+### 7.1 安裝第三方模塊
+
+```shell
+pip install mysqlclient
+```
+
+### 7.2 ORM
+
+ORM可以幫助我們做的兩件事
+- 創建、修改、刪除數據庫中的表（不用SQL語句），但是無法創建數據庫。
+- 操作表中的數據（不用SQL語句）
+
+>![[初始化數據庫]]
+
+- 我創建的數據庫命名爲testDjango_1
+
+#### 7.2.1 配置數據庫
+
+- 打開settings.py可以看到原先就有一個叫數據庫的字典，我們需要對它進行更改
+	```python
+	DATABASES = {  
+	    'default': {  
+	        'ENGINE': 'django.db.backends.mysql',  
+	        'NAME': 'testDjango_1',   # 數據庫名字  
+	        'USER': 'root',  
+	        'PASSWORD': '<PASSWORD>',  
+	        'HOST': '127.0.0.1',   # 數據庫所在的電腦IP  
+	        'PORT': '3306',  
+	    }
+	```
+
+#### 7.2.2 Django對表操作
+
+- 創建表
+	- 在models.py添加新的繼承后的新類
+		```python
+		class UserInfo(models.Model):  
+		    id = models.IntegerField(primary_key=True)  
+		    name = models.CharField(max_length=100)  
+		    password = models.CharField(max_length=100)  
+		    age = models.IntegerField(default=18)  
+		  
+		    # 等價於執行了  
+		    """  
+		    create table app01_userInfo(
+			    id bigint auto_increment primary key,
+			    name varchar(100),
+			    password varchar(100),
+			    age bigint
+			    )
+			"""
+		```
+	- 在命令欄進行執行，主要兩點
+		- 使用的python解釋器需要安裝了mysqlclient庫
+		- 執行命令的位置需要在manage.py的目錄下，或者直接引導到manage.py的路徑
+		- App01需要提前注冊
+			```shell
+			python manage.py makemigrations
+			python manage.py migrate
+			```
+			有點崩潰我在這弄了半天，最後用的那個`python manage.py makemigrations --empty app01`清除然後重建了才可以的。
+		- 注意後面想要改寫你的内容也可以繼續用這兩個指令並在models.py内做更改，但是要注意的是修改同一個表的結構時，注釋或刪掉原有的列后在執行上面的兩個指令可以重新部署表而不影響其他列的數據
+		- 但是當我們要給已有的表增加一列時，計算機事先不知道應當填充什麽樣的數據到新增列内，這時需要我們初始化
+			1. 手動輸入一個值
+			2. 設置默認值
+				```python
+				age = models.IntegerField(default = 18)
+				```
+			3. 允許爲空
+				```python
+				data = models.IntegerField(null=True, blank=True)
+				```
+- 修改、刪除：
+	對於ORM内的數據庫操作，當我們需要調整表及其結構時步驟如下：
+	1. 更改models.py
+	2. 使用命令
+
+#### 7.2.3 Django對表内數據操作
+
+我接下來直接用示例了
+- 新建
+	- views.py
+		```python
+		def orm(request):  
+		    # 測試ORM對表中數據操作  
+		    UserInfo.objects.create(name="Thomas")  
+		    UserInfo.objects.create(password="123")  
+		    UserInfo.objects.create(age=22)  
+		    return HttpResponse("成功")
+		```
+	- 數據庫，有點亂糟糟但是能看懂的吧
+		```sql
+		+----+--------+----------+-----+
+		| id | name   | password | age |
+		+----+--------+----------+-----+
+		|  1 | Thomas |          |  18 |
+		|  2 |        | 123      |  18 |
+		|  3 |        |          |  22 |
+		+----+--------+----------+-----+
+		```
+		這時候可以明顯看出每次創建它都是一整行一整行創建的，要一次生成一整行需要這樣：
+	- views.py
+		```python
+		def orm(request):  
+		    # 測試ORM對表中數據操作  
+		    # UserInfo.objects.create(name="Thomas")  
+		    # UserInfo.objects.create(password="123")
+		    # UserInfo.objects.create(age=22)  
+		    UserInfo.objects.create(name="Alex", password="apple", age=19)  
+		    UserInfo.objects.create(name="Lucy", password="123Lci", age=35)  
+		    return HttpResponse("成功")
+		```
+	- 數據庫
+		```sql
+		+----+--------+----------+-----+
+		| id |  name  | password | age |
+		+----+--------+----------+-----+
+		|  1 | Thomas |          |  18 |
+		|  2 |        | 123      |  18 |
+		|  3 |        |          |  22 |
+		|  4 | Alex   | apple    |  19 |
+		|  5 | Lucy   | 123Lci   |  35 |
+		+----+--------+----------+-----+
+		```
+- 刪除
+	- views.py
+		```python
+		def orm(request): 
+		    ###   2. 刪除   ###
+			UserInfo.objects.filter(id=3).delete()  
+		    # UserInfo.objects.all().delete()
+		```
+	- 數據庫
+		```sql
+		+----+--------+----------+-----+
+		| id | name   | password | age |
+		+----+--------+----------+-----+
+		|  1 | Thomas |          |  18 |
+		|  2 |        | 123      |  18 |
+		|  4 | Alex   | apple    |  19 |
+		|  5 | Lucy   | 123Lci   |  35 |
+		|  6 | Alex   | apple    |  19 |
+		|  7 | Lucy   | 123Lci   |  35 |
+		+----+--------+----------+-----+
+		```
+- 獲取
+	- views.py
+		```python
+		def orm(request):  
+		    ###   3. 獲取數據   ###
+		    # data_list = [row,row,row]  Query Set類型  
+		    data_list = UserInfo.objects.all()  
+		    for obj in data_list:  
+		        print(obj.id, obj.name, obj.age)  
+		    return HttpResponse("成功")
+		```
+	- 終端
+		```shell
+		1 Thomas 18
+		2  18
+		4 Alex 19
+		5 Lucy 35
+		6 Alex 19
+		7 Lucy 35
+		```
+		如果用了`.filter()`替代`.all()`則可以實現篩選，如果只想獲得某行，比如我選擇的是id為5的一行，此時可以用`rol_obj = UserInfo.objects.filter(id=5).first()`來實現直接調取成一個循環中的`obj`那樣的字典
+- 更新
+	- views.py
+		```python
+		def orm(request):  
+			###   4. 更新數據   ###
+			UserInfo.objects.all().update(password="<PASSWORD>")  
+		    # 改成篩選出的某些數據也行，all和filter某種意義上是用法一致的  
+		    return HttpResponse("成功")
+		```
+	- 數據庫
+		```sql
+		+----+--------+------------+-----+
+		| id | name   | password   | age |
+		+----+--------+------------+-----+
+		|  1 | Thomas | <PASSWORD> |  18 |
+		|  2 |        | <PASSWORD> |  18 |
+		|  4 | Alex   | <PASSWORD> |  19 |
+		|  5 | Lucy   | <PASSWORD> |  35 |
+		|  6 | Alex   | <PASSWORD> |  19 |
+		|  7 | Lucy   | <PASSWORD> |  35 |
+		+----+--------+------------+-----+
+		```

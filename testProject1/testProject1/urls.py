@@ -27,4 +27,5 @@ urlpatterns = [
     path('news/', views.news),
     path('something/', views.something),
     path('login/', views.login),
+    path('orm/', views.orm),
 ]
