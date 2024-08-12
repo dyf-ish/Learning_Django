@@ -1,0 +1,46 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>user_list</title>
+    <style>
+        @font-face {
+            font-family: "優雅";
+            src: url({% static 'fonts/qiji-combo-large.ttf' %}) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+        }
+        body {
+            font-family: 優雅;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>用戶列表</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>密碼</th>
+                <th>郵箱</th>
+                {# 以後大約會加上權限之類的 #}
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in datalist %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.pwd }}</td>
+                <td>{{ item.email }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

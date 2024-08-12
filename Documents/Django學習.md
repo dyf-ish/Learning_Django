@@ -138,6 +138,8 @@ django-admin startproject 項目名稱
 - views.py
 ```python
 def user_list(request):
+	# 此處輸入的request實質上只是一個變量
+	# 與第三方模塊requests無關
 	# 會去app01目錄下的templates目錄尋找user_list.html
 	# 實際上根據App的注冊順序逐一去他們的templates文件夾中尋找
 	# settings.py中如果由PyCharm創建，也就是有'DIRS': [BASE_DIR / 'templates']
@@ -237,3 +239,244 @@ def user_list(request):
 > 2. 内部進行渲染，即執行模板語法並將其替換爲數據，最終得到只包含HTML標簽的字符串
 > 3. 將渲染和替換完成的字符串返還給瀛湖瀏覽器
 > 也就是説整個模板語法的轉譯過程是在服務器端就執行完畢的而非瀏覽器内
+
+- 案例：新聞頁面
+	- 做新聞頁面之前你肯定要有新聞資料，通常做相關業務如果不是主營新聞方面的咨詢服務是不會自己去親自寫整個新聞内容的，因此往往需要引入第三方服務。
+	- urls.py的内容這裏就不附帶了，和之前一樣寫個path就好了。
+	- view.py:
+		```python
+		def news(request): 
+			import requests   # 訪問外部的網絡信息所必須的
+			import datetime   # 爲了將一些外部的數字時間轉化爲人類可讀的時間信息
+			import time   # 爲了防止過頻繁的訪問而設置的一些延遲所需要的
+
+		### 第一種：新浪的API，這邊用的好像是過時的，給的信息都是2023年的 ###
+
+			url = "https://feed.mix.sina.com.cn/api/roll/get"  
+			params = {  
+				"pageid": "153",  
+				"lid": "2514",  # 使用財經頻道的lid
+				"num": "20",    # 獲取20條新聞 
+				"versionNumber": "1.2.8",  
+				"page": "1"  
+			}  
+			res = requests.get(url, params=params)  
+			data = res.json()  
+			print(data)  
+			  
+			news_items = data['result']['data']  
+			extracted_data = []  
+			  
+			for item in news_items:  
+				news_entry = {  
+					'title': item.get('title', '無標題'),  
+					# 這裏是時間格式的轉換
+					'time': datetime.datetime.fromtimestamp(int(item.get('ctime', '無時間'))).strftime('%Y-%m-%d %H:%M:%S'),  
+					'summary': item.get('summary', '無概要'),  
+					'images': item.get('images', [])  
+				}  
+				image_urls = [img.get('u') for img in news_entry['images']]  
+				news_entry['images'] = image_urls  
+			  
+				extracted_data.append(news_entry)  
+			  
+			print(extracted_data)
+
+		### 第二種：Hacker News的API ###
+
+			url = "https://hacker-news.firebaseio.com/v0/newstories.json"  
+			data = {}  
+			  
+			try:  
+			    # 獲取新故事的ID列表
+			    response = requests.get(url, timeout=10)  
+			    response.raise_for_status()  # 確保請求成功  
+			    story_ids = response.json()  
+			  
+			    # 遍歷每個故事ID以獲得詳細信息  
+			    for story_id in story_ids[:30]:  # 僅獲取前30個故事以免請求過多  
+			        story_url = f"https://hacker-news.firebaseio.com/v0/item/{story_id}.json"  
+			        try:  
+			            story_response = requests.get(story_url, timeout=10)  
+			            story_response.raise_for_status()  # 確保請求成功 
+			            story_details = story_response.json()  
+			            data[story_id] = story_details  
+			            time.sleep(0.05)  # 等待0.05秒以免請求過於頻繁  
+			        except requests.RequestException as e:  
+			            print(f"請求故事{story_id}發生錯誤:{e}")  
+			  
+			except requests.RequestException as e:  
+			    print(f"獲取編號ID的故事列表時發生錯誤:{e}")  
+			  
+			print(data)  
+			  
+			data_list = []  
+			  
+			for item in data.values():  
+			    info = dict()  
+			    info["author"] = item["by"]  
+			    info["title"] = item["title"]  
+			    info["time"] = datetime.datetime.fromtimestamp(item["time"]).strftime('%Y-%m-%d %H:%M:%S')  
+			    data_list.append(info)
+			    
+		### 第三種：NewsAPI，這個個人感覺更好一點，有圖片、免費、還比較實時 ###
+			url = "https://newsapi.org/v2/top-headlines"  
+			params = {  
+			    "apiKey": "My'API",  # MyAPI替換爲你的API密鑰  
+			    "q": "news"  # 使用了通用的查詢詞  
+			}  
+			  
+			# 發送GET請求  
+			response = requests.get(url, params=params)  
+			  
+			# 解析Json響應  
+			data = response.json()  
+			  
+			# print(data.encode('utf-8'))  
+			  
+			data_list = []  
+			# 檢查響應狀態  
+			if data["status"] == "ok":  
+			    # 提取新聞數據  
+			    articles = data["articles"]  
+			  
+			    # 遍歷新聞内容  
+			    for article in articles:  
+			        info = dict()  
+			        info["images"] = article.get("urlToImage", "No Image URL")  
+			        info["title"] = article.get("title", "No Title")  
+			        info["author"] = article.get("author", "No Author Name")  
+			        info["time"] = article.get("publishedAt", "No Publish Date")  
+			        info["summary"] = article.get("description", "No Description")  
+			        info["content"] = article.get("content", "No Content")  
+			        info["url"] = article.get("url", "No URL")  
+			        data_list.append(info)  
+			else:  
+			    print("Failed to retrieve news data.")
+			
+			
+			# 返回數據給框架，然後框架對html文件進行填充
+			# 注意上述方法是三選一
+			return render(request, 'news.html', {'data_list': data_list})
+		```
+	- news.html：
+		```html
+		{% load static %}
+		{# 要記得讀取static #}
+
+		<!DOCTYPE html>  
+		<html lang="en">  
+		<head>  
+		    <meta charset="UTF-8">  
+		    <title>新聞</title>  
+		    {#  用了美美的字體  #}  
+		    <style>  
+		        @font-face {  
+		            font-family: "優雅";  
+		            src: url({% static 'fonts/qiji-combo-large.ttf' %}) format('truetype');  
+		            font-weight: normal;  
+		            font-style: normal;  
+		            font-size: 20px;  
+		        }  
+		        body {  
+		            font-family: 優雅;  
+		            padding: 30px;  
+		        }  
+		    </style>  
+		</head>  
+		<body>  
+		    <table border="1">  
+		        <thead>
+		        <tr>
+				        {# 先把第一個新聞字典的每個索引遍歷了當作列的標題 #}  
+		                {% for key in data_list.0.keys %}  
+		                    <th>{{ key }}</th>  
+		                {% endfor %}  
+		            </tr>  
+		        </thead>
+		        <tbody>
+					{# 每個新聞 #}  
+		            {% for dict in data_list %}  
+		                <tr>  
+		                    {# 每個新聞的元素 #}  
+		                    {% for key, item in dict.items %}  
+		                        <td>  
+			                        {# 檢查是否是圖片 #}
+		                            {% if key == "images" %}
+		                                <img src="{{ item }}" style="max-width: 100px" alt="No Image">
+		                            {% else %}  
+		                                {{ item }}  
+		                            {% endif %}
+		                        </td>  
+		                    {% endfor %}  
+		                </tr>  
+		            {% endfor %}  
+		        </tbody>  
+		    </table>
+		</body>  
+		</html>
+		```
+
+>附上一些好玩的錯誤：![[錯誤使用字典.png]]
+>要注意先是`key`再是`item`，這個和定義時`"key": item`是一樣的順序，如圖就錯誤的將索引給到了`item`變量，將内容給到了`key`變量。同時，在下方的判斷語句中沒有給`images`加引號，這時該變量的值為空，而`key`變量實際上是某個新聞的内容，另一方面獲得的新聞信息只有圖片地址可能為空，所以當且僅當沒有圖片時，字典内容為空，賦值到變量`key`裏后與一直為空的變量`images`作比較，則正好依然能過濾出所有沒有圖片的項目並跳轉顯示`"#"`，引用我高中數學老師的話，這就是錯了又錯了結果對了。![[錯誤使用字典后.png]]
+
+## 6 請求和響應
+
+### 6.1 簡單介紹下常見請求和響應
+
+```python
+def something(request):  
+	# request是一個對象，封裝了用戶發送過來的請求和相關數據  
+  
+	# 1. 獲取請求方式：GET或POST  
+	print(request.method)  
+  
+	# 2. 在URL上傳遞值 /something/?q1=question1&q2=blablabla    print(request.GET)  
+  
+	# 3. 在請求中提交數據  
+	print(request.POST)  
+  
+	# 4. HttpResponse("返回内容字符串給請求者")  
+	return HttpResponse("Hello World")  
+  
+	# 5. render(request, 'something.html', {"text": "這個部分之前一直在用就不講了"})  
+	# 基本就是讀取HTML的内容再渲染后返回字符串也就是html給用戶瀏覽器  
+  
+	# 6. 重定向  
+	# return redirect('index'或者別的url)  
+	# 關於重定向：  
+	# 在Django的框架下，整個流程是瀏覽器訪問我們的服務器，服務器會返回瀏覽器一個信息，讓用戶瀏覽器自己去訪問重定向的地址  
+	# 也就是後續的重定向網址的訪問與我們就無關了，只是一個介紹人的職責，而不是中間人
+```
+
+### 6.2 案例：登錄界面
+
+- 首先還是弄個`Path`
+- 然後去views裏編寫對應的函數`login`
+	```python
+		def login(request):  
+	    if request.method == "GET":  
+	        return render(request, "login.html")  
+	  
+	    # 小技巧：由於if語句執行後可以提前退出，即執行return，所以後續的内容不需要放在else裏  
+	    # 快捷鍵：我縂忘記，shift+tab是往前縮進，也就是撤銷tab  
+	  
+	    # POST下我們需要獲得用戶傳輸的數據  
+	    # print(request.POST)  
+	    username = request.POST.get("name")  
+	    pwd = request.POST.get("pwd")  
+	    # print(username, pwd)  
+	    if username == "Thomas" and pwd == "123":  
+	        return redirect("/news/")   # 注意這個功能要import  
+	  
+	    # return HttpResponse("登陸失敗")  
+	    # 我們希望重新返回登錄頁面並通過error_msg返回錯誤信息  
+	    return render(request, "login.html", {"error_msg": "用戶名或密碼錯誤，也有可能是驗證碼錯誤，你自己看看"})
+	```
+- 後續的HTML沒什麽好説的，詳見對應的文件内容。在此只額外提以下幾點：
+	- `{% load static %}`不要忘記添加，不然無法讀取設定好的靜態文件
+	- `<form style="padding: 20px" action="/login/" method="POST">`這個`action`和`method`不要忘記
+	- Django比Flask多一個csrf_token安全驗證的過程需要在要提交的表單内加入對應的指令`{% csrf_token %}`，否則會報錯。![[Forbidden_403.png]]注意一定要加載表單裏！
+	- 表單提交後的檢索是依據`<input>`的`name`屬性
+	- 添加`<span style="color: red">*{{ error_msg }}</span>`可以在錯誤時返回錯誤數據，如同![[登錄錯誤效果.png]]
+## 7 數據庫操作

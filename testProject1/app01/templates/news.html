@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新聞</title>
+    {#  用了美美的字體  #}
+    <style>
+        @font-face {
+            font-family: "優雅";
+            src: url({% static 'fonts/qiji-combo-large.ttf' %}) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+        }
+        body {
+            font-family: 優雅;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+    <table border="1">
+        <thead>
+            <tr>
+                {# 先把第一個新聞字典的每個索引遍歷了當作列的標題 #}
+                {% for key in data_list.0.keys %}
+                    <th>{{ key }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {# 每個新聞 #}
+            {% for dict in data_list %}
+                <tr>
+                    {# 每個新聞的元素 #}
+                    {% for key, item in dict.items %}
+                        <td>
+                            {# 檢查是否有圖片 #}
+                            {% if key == "images" %}
+                                <img src="{{ item }}" style="max-width: 100px" alt="No Image">
+                            {% else %}
+                                {{ item }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

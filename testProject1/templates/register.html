@@ -1,0 +1,127 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注冊</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1-dist/css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free-6.6.0-web/css/all.css' %}">
+    <style>
+        @font-face {
+            font-family: "優雅";
+            src: url({% static 'fonts/qiji-combo-large.ttf' %}) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+        }
+        body {
+            font-family: 優雅;
+            padding: 30px;
+        }
+        .account {
+            width: 300px;
+            border: 1px solid #dddddd;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 20px;
+            border-radius: 5px;
+
+            /*阴影*/
+            /*水平、数值、宽度、颜色*/
+            /*可以取负数*/
+            box-shadow: 5px 5px 20px darkred;
+        }
+        #loginTitle {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            padding: 5px;
+            width: 260px;
+        }
+    </style>
+</head>
+<body>
+<div class="account">
+    {#  注意要加上action和method來返回數據  #}
+    <form action="/register/" method="POST" style="padding: 20px">
+        {% csrf_token %}
+        <h1 style="text-align: center; font-weight: bold" id="loginTitle">用戶注冊</h1>
+        <span id="warn"></span>
+        <div class="form-group">
+            <div style="width: 260px; margin-left: 20px; margin-bottom: 5px">
+                <label for="name" style="font-weight: bold">用戶名</label>
+            </div>
+            <div style="width: 260px; margin-left: 20px;">
+                <input type="text" class="form-control" name="name"  id="name" style="height: 19px; width: 200px" placeholder="請輸入用戶名">
+            </div>
+        </div>
+        <div class="form-group">
+            <div style="width: 260px; margin-left: 20px; margin-bottom: 5px">
+                <label for="email" style="font-weight: bold">郵箱</label>
+            </div>
+            <div style="width: 260px; margin-left: 20px;">
+                <input type="email" class="form-control" name="email" id="email" style="height: 19px; width: 200px" placeholder="請輸入郵箱地址">
+            </div>
+        </div>
+        <div class="form-group">
+            <div style="width: 260px; margin-left: 20px; margin-bottom: 5px">
+                <label for="pwd" style="font-weight: bold">密碼</label>
+            </div>
+            <div style="width: 260px; margin-left: 20px;">
+                <input type="password" class="form-control" name="pwd" id="pwd" style="height: 19px; width: 200px;" placeholder="請輸入密碼">
+            </div>
+        </div>
+        <div class="form-group">
+            <div style="width: 260px; margin-left: 20px; margin-bottom: 5px">
+                <label for="pwd_confirm" style="font-weight: bold">確認密碼</label>
+            </div>
+            <div style="width: 260px; margin-left: 20px;">
+                <input type="password" class="form-control" name="pwd_confirm" id="pwd_confirm" style="height: 19px; width: 200px;" placeholder="請輸入密碼">
+            </div>
+        </div>
+        <div class="form-group">
+            <div style="width: 260px; margin-left: 20px">
+                <label for="name" style="font-weight: bold">驗證碼</label>
+            </div>
+            <div style="display: flex; align-items: center; width: 260px; margin-left: 20px">
+                <input type="text" class="form-control" name="test" id="test"  style="margin-right: 10px; height: 19px; width: 100px">
+                <img src="{% static 'img/test.png' %}" class="img-responsive" alt="Responsive image" style="width: 100px;">
+            </div>
+        </div>
+        <div style="width: 100px; margin-left: auto; margin-right: auto; margin-top: 20px; margin-bottom: 10px">
+            <button type="submit" class="btn btn-primary" style="font-family: 優雅; height: 30px; width: 100px" id="confirm">登 录</button>
+        </div>
+    </form>
+</div>
+<script src="{% static 'js/jquery-3.7.1.js' %}"></script>
+<script src="{% static 'plugins/bootstrap-3.4.1-dist/js/bootstrap.js' %}"></script>
+<script>
+    $(function () {
+        // 绑定点击事件
+        $("#confirm").click(function(event) {
+            check(event);  // 传递 event 对象
+        });
+    });
+
+    function check(event) {
+        $(".w").remove();  // 刪除之前的提示
+
+        var name = $("#name").val();
+        var pwd1 = $("#pwd").val();
+        var pwd2 = $("#pwd_confirm").val();
+        var email = $("#email").val();
+        var test = $("#test").val();
+
+        if (pwd1 !== pwd2) {
+            $("h1").after("<div class='w' style='text-align: right; margin-right: 20px; font-size: 10px; color: darkred'>提示：兩次密碼輸入不同<div>");  // 使用text()显示信息
+            event.preventDefault();  // 阻止表单提交
+        }
+        if (!name || !pwd1 || !pwd2 || !email || !test) {
+            $("h1").after("<div class='w' style='text-align: right; margin-right: 20px; font-size: 10px; color: darkred'>提示：請完整填寫内容<div>");
+            event.preventDefault();
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>模板語法學習</title>
+</head>
+<body>
+    <h1>模板語法的學習</h1>
+    <hr>
+    <div>{{ username }}</div>
+    <hr>
+    <div>Skills: {{ skills }}</div>
+    <div>The first skill: {{ skills.0 }}</div>
+    <div>
+        Skills:
+        {% for item in skills %}
+            <span style="color: darkred">{{ item }}</span>
+        {% endfor %}
+    </div>
+    <hr>
+    {{ info }}
+    {{ info.id }}
+    {{ info.salary }}
+    {{ info.married }}
+    <table border="1">
+        <thead>
+            <tr>
+                {% for item in info.keys %}
+                    <th>{{ item }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for item in info.values %}
+                    <th>{{ item }}</th>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <ul>
+        {% for key, item in info.items %}
+            <li>{{ key }}: {{item}}</li>
+        {% endfor %}
+    </ul>
+    <hr>
+    {% if username == "Thomas" %}
+        <h1>恭迎陛下！陛下萬歲萬歲萬萬歲！</h1>
+    {% elif username == "Alex" %}
+        <h1>不是你誰啊？</h1>
+    {% else %}
+        沒有人：
+    {% endif %}
+</body>
+</html>
