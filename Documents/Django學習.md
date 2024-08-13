@@ -478,7 +478,7 @@ def something(request):
 	- `<form style="padding: 20px" action="/login/" method="POST">`這個`action`和`method`不要忘記
 	- Django比Flask多一個csrf_token安全驗證的過程需要在要提交的表單内加入對應的指令`{% csrf_token %}`，否則會報錯。![[Forbidden_403.png]]注意一定要加載表單裏！
 	- 表單提交後的檢索是依據`<input>`的`name`屬性
-	- 添加`<span style="color: red">*{{ error_msg }}</span>`可以在錯誤時返回錯誤數據，如同![[登錄錯誤效果.png]]
+	- 添加`<span style="color: red">*{{ error_msg }}</span>`可以在錯誤時返回錯誤數據，如圖![[登錄錯誤效果.png]]
 
 ## 7 數據庫操作
 
@@ -673,3 +673,121 @@ ORM可以幫助我們做的兩件事
 		|  7 | Lucy   | <PASSWORD> |  35 |
 		+----+--------+------------+-----+
 		```
+
+## 8 Django組件
+
+- 梗概
+	- 首先面對的需求是什麽？
+		1. 用戶提交數據需要校驗
+		2. 輸入信息不符合要求頁面上應當存在錯誤提示
+		3. 頁面上每個重複字段都需要手寫
+		4. 關聯數據需要手動獲取并通過循環語法顯示在頁面
+	- 實際上舊有的辦法可以解決，但是會顯得很業餘且很繁瑣，因此django對於這些需求提供了兩個組件
+		- Form組件：輕便但是只能實現前三種
+		- ModelForm組件：成熟、完備、簡便
+### 8.1 初識Form
+#### 8.1.1 view.py
+```python
+class MyForm(Form):
+	# Form這些下面的都要自己寫，雖然比直接在網頁上佈置輕鬆了已經
+	uper = forms.CharField(widget=forms .Input )
+	pwd = form.CharFiled(widget=forms.Input)
+	email = form.CharFiled(widget=forms.Input)
+	account = form.CharFiled(widget=forms.Input)
+	create time = form.CharFiled(widget=forms.Input)
+	depart = form.CharFiled(widget=forms.Input)
+	gender = form.Charriled(widget=forms.Input)
+def user_add(request):
+	if request.method =="GET":
+		form = MyForm()
+	return render(request,'user add.html',{"form":form})
+```
+
+#### 8.1.2 user_add.html
+```html
+<form method="post">
+	{% for field in form %}
+		({ field }}
+	{% endfor %}
+	<!-- 等價於 -->
+	<!-- <input type="text" placeholder="姓名" name="user" />-->
+</form>
+```
+
+### 8.2 ModelForm（推薦）
+
+#### 8.2.1 初識：
+- 現在我們擁有一個表，其在model.py内的代碼為：
+	```python
+	class UserInfo(models.Model):  
+	    """ 員工表 """
+	    name = models.CharField(verbose_name="姓名", max_length=16)  
+	    gender_choice = (  
+	        (0, "男"),  
+	        (1, "女"),  
+	    )  
+	    gender = models.SmallIntegerField(verbose_name="性別", choices=gender_choice)  
+	    password = models.CharField(verbose_name="密碼", max_length=16)  
+	    age = models.IntegerField(verbose_name="年齡")  
+	    account = models.DecimalField(verbose_name="賬戶餘額", max_digits=10, decimal_places=2, default=0)  
+	    create_time = models.DateTimeField(verbose_name="注冊日期", auto_now_add=True)  
+	    introduction = models.TextField(verbose_name="簡介", null=True, blank=True)
+	```
+- 而在views.py中：
+	```python
+	class MyForm(ModelForm):
+		# xx = form.CharField*("...")  也就是還能自定義字段，在數據本身外再加
+		class Meta:
+			model = User_Info
+			fields = [
+				"name",
+				"gender",
+				"password",
+				"age",
+				"account",
+				"create_time",
+				"introduction"
+			]
+	```
+- 其餘部分與Form一致，也就是説他比較好的實現了數據表與輸出的聯係，能簡化view.py内的書寫。
+
+#### 8.2.2 引例深入
+- 在models裏代碼一致，而views中如下：
+	```python
+	########################## ModelForm示例 ##########################
+	from django import forms  
+	from app01 import models  
+	class UserModelForm(forms.ModelForm):  
+	    class Meta:  
+	        model = models.UserInfo  
+	        fields = "__all__"   # 代表全選
+	  
+	def user_add(request):  
+	    """ 使用ModelForm的添加用戶 """
+	    form = UserModelForm(request.POST or None)  
+	    return render(request, 'user_add.html', {'form': form})
+	```
+- 此時在user_add.html中：
+	```html
+	<!DOCTYPE html>  
+	<html lang="en">  
+	<head>  
+	    <meta charset="UTF-8">  
+	    <title>Title</title>  
+	</head>  
+	<body>  
+	    <form method="post"></form>  
+	        {% csrf_token %}  
+	        {% for field in form %}  
+	            {# 這個可以顯示標簽，標簽就是那個verbose_name #}  
+	            {{ field.label }}: 
+	            
+	            {# 這個顯示選框 #}  
+	            {{ field }}
+	        {% endfor %}
+	        {# 檢索還可以直接用點 #}  
+			{{ field.password.label }}
+	</body>  
+	</html>
+	```
+- 目前仍然存在的問題是，他輸出的外鍵選框内部是object什麽什麽，也就是不是我們想要的要素名稱，而在源碼中，每個選項都是一個類的實例，那麽print類的實例時不會得到名稱，所以需要在類中定義`__str__()`方法。

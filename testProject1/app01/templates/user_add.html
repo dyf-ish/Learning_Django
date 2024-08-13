@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form method="post"></form>
+        {% csrf_token %}
+        {% for field in form %}
+            {# 這個可以顯示標簽 #}
+            {{ field.label }}:
+            {# 這個顯示選框 #}
+            {{ field }}
+        {% endfor %}
+        {# 檢索還可以直接用點 #}
+        {{ field.password.label }}
+</body>
+</html>

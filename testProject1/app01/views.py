@@ -198,3 +198,16 @@ def orm(request):
     UserInfo.objects.all().update(password="<PASSWORD>")
     # 改成篩選出的某些數據也行，all和filter某種意義上是用法一致的
     return HttpResponse("成功")
+
+########################## ModelForm示例 ##########################
+from django import forms
+from app01 import models
+class UserModelForm(forms.ModelForm):
+    class Meta:
+        model = models.UserInfo
+        fields = "__all__"
+
+def user_add(request):
+    """ 使用ModelForm的添加用戶 """
+    form = UserModelForm(request.POST or None)
+    return render(request, 'user_add.html', {'form': form})
