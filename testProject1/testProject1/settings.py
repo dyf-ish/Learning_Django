@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app01.apps.App01Config',
-    "userManagement.apps.UsermanagementConfig"
 ]
 
 MIDDLEWARE = [
@@ -88,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'testdjango_1',   # 數據庫名字
         'USER': 'root',
-        'PASSWORD': '13572468',
+        'PASSWORD': '<pwd>',    # 這裏放你數據庫的密碼，我這直接藏起來咯
         'HOST': '127.0.0.1',   # 數據庫所在的電腦IP
         'PORT': '3306',
     }

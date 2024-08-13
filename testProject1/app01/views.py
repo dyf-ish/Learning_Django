@@ -98,7 +98,7 @@ def news(request):
 
     url = "https://newsapi.org/v2/top-headlines"
     params = {
-        "apiKey": "5d3d103a21db414091be25fffda0266b",  # 替換爲你的API密鑰
+        "apiKey": "Your api key",  # 替換爲你的API密鑰
         "q": "news"  # 使用了通用的查詢詞
     }
 
